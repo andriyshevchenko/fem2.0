@@ -25,8 +25,8 @@ namespace FEM
             T0 = t0;
             Condition = condition;
 
-            U0 = partEnd(Elements, 1).Select(Condition.U0).ToArray();
-            V0 = partEnd(Elements, 1).Select(Condition.V0).ToArray();
+            U0 = partEnd(Elements.ToArray(), 1).Select(Condition.U0).ToArray();
+            V0 = partEnd(Elements.ToArray(), 1).Select(Condition.V0).ToArray();
         }
 
         public Func<double, int, double> Calculate()

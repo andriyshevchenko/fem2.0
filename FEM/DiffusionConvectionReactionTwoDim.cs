@@ -15,7 +15,7 @@ namespace FEM
             : base(tMax, nT, elements)
         {
             Condition = condition;
-            U0 = array(partEnd(Elements, 1).Select(Condition.U_0));
+            U0 = array(partEnd(Elements.ToArray(), 1).Select(Condition.U_0));
         }
 
         public Func<double, double, double> Mu;

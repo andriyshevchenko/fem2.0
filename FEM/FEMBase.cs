@@ -1,16 +1,17 @@
 ﻿using MathNet.Numerics.Integration;
 using System;
+using System.Collections.Generic;
 using static System.Math;
 namespace FEM
 {
     public class FEMBase
     {
-        public double[] Elements;
-        protected int N => Elements.Length;
+        public List<double> Elements;
+        protected int N => Elements.Count;
 
         public FEMBase(double[] elements)
         {
-            Elements = elements;
+            Elements = new List<double>(elements);
         }
 
         protected double CalculateFromBasis(double x, double[] basis)
@@ -18,7 +19,8 @@ namespace FEM
             double sum = 0.0;
             for (int i = 0; i < basis.Length; i++)
             {
-                sum += basis[i] * Fi(x, i+1);
+                double fi = Fi(x, i + 1);
+                sum += basis[i] * fi;
             }
             return sum;
         }
@@ -37,7 +39,7 @@ namespace FEM
         {
             (double a, double b) = GetIntegrationBounds(k, s);
             return GaussLegendreRule.Integrate(x => Fi(x, k) * Fi(x, s), a, b, 5);
-        }
+        }   
 
         protected double L2Product(Func<double, double> f1, Func<double, double> f2)
         {

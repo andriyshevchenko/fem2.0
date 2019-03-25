@@ -1,19 +1,19 @@
-﻿using System.Data;
+﻿using FEM;
+using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using static System.Linq.Enumerable;
+using System.Windows.Forms.DataVisualization.Charting;
 using static System.Collections.Generic.Create;
 using static System.Collections.Generic.SeriesCreate;
+using static System.Linq.Enumerable;
 using static System.Math;
-using FEM;
-using System.Windows.Forms.DataVisualization.Charting;
-using System.Drawing;
 
 namespace Plot
 {
     public partial class Form1 : Form
     {
-        DiffusionConvectionReaction Task =
+        private DiffusionConvectionReaction Task =
             new DiffusionConvectionReaction(
                 _values,
                 new DiffusionConvectionReaction.BoundaryCondition(u0: 0, u1: 0),
@@ -24,14 +24,16 @@ namespace Plot
         public Form1()
         {
             InitializeComponent();
-
+            Task.Solve();
+            Task.Calc_Eh();
             chart1.Series.Add(new Series
             {
                 ChartType = SeriesChartType.Line,
                 Color = Color.Green,
                 MarkerStyle = MarkerStyle.Circle,
                 MarkerSize = 4,
-                BorderWidth = 1
+                BorderWidth = 1,
+                Name = "Uh(x)"
             });
 
             chart1.Series.Add(new Series
@@ -40,29 +42,51 @@ namespace Plot
                 Color = Color.Red,
                 MarkerStyle = MarkerStyle.None,
                 MarkerSize = 4,
-                BorderWidth = 1
+                BorderWidth = 1,
+                Name = "Eh(x)"
             });
             chart1.Series.Add(new Series
             {
                 ChartType = SeriesChartType.Line,
-                Color = Color.Black,  
-                BorderWidth = 1,  
+                Color = Color.Black,
+                BorderWidth = 1,
+                Name = "x = 0"
+            });
+            chart1.Series[3].Points.DataBindXY(array(0.0, 1), array(0.0, 0.0));
+
+            chart1.Series.Add(new Series
+            {
+                ChartType = SeriesChartType.Line,
+                Color = Color.Gray,
+                BorderWidth = 1,
+                Name = "U(x)"
             });
 
             chart1.ChartAreas[0].AxisX.Minimum = 0;
             chart1.ChartAreas[0].AxisX.Maximum = 1.0;
             chart1.ChartAreas[0].AxisY.Maximum = 1.0;
             chart1.ChartAreas[0].AxisY.Minimum = -0.4;
+            chart1.ChartAreas[0].AxisX.MajorGrid.LineWidth = 0;
+            chart1.ChartAreas[0].AxisY.MajorGrid.LineWidth = 0;
 
-            chart1.Series[1].Points.DataBindXY(_values, array(_values.Select(x => Task.U(x))));
-            double[] xValue = Series(0.0, 1.0, 120);
-            Task.Calc_Eh();
-            double[] error_xasis = Series(0.0, 1.0, 240);
-            chart1.Series[2].Points.DataBindXY(error_xasis, error_xasis.Select(x => Task.ErrorEstimate(x)).ToList());
-            chart1.Series[3].Label = "x = 0";
-            chart1.Series[3].Points.DataBindXY(array(0.0, 1), array(0.0, 0.0));
+            Plot();
+
+            //chart1.Series[4].Points.DataBindXY(error_xasis, error_xasis.Select(x => Task.U(x) + Task.Error(x)).ToList());
         }
 
-        static double[] _values = Series(0.0, 1.0, 6);
+        private void Plot()
+        {
+            chart1.Series[1].Points.DataBindXY(_values, array(_values.Select(x => Task.U(x))));
+            chart1.Series[2].Points.DataBindXY(error_xasis, error_xasis.Select(x => Task.Error(x)).ToList());
+        }
+
+        private static double[] error_xasis = Series(0.0, 1.0, 240);
+        private static double[] _values = Series(0.0, 1.0, 4);
+
+        private void Chart1_Click(object sender, System.EventArgs e)
+        {
+            this.Task.StartAdaptationAlgorithm(5);
+            Plot();
+        }
     }
 }

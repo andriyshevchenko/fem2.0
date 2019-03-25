@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace FEM
 {
@@ -7,7 +9,7 @@ namespace FEM
     /// </summary>
     public class B_BasisFunc
     {
-        public static double B_i(double x, int i, double[] xi)
+        public static double B_i(double x, int i, IList<double> xi)
         {
             double ret = 0.0;
             if (x > xi[i] && x < xi[i + 1])
@@ -18,7 +20,7 @@ namespace FEM
             return ret;
         }
 
-        public static double d_dx(double x, int i, double[] xi)
+        public static double d_dx(double x, int i, IList<double> xi)
         {
             double ret = 0.0;
             if (x > xi[i] && x < xi[i + 1])
@@ -32,11 +34,11 @@ namespace FEM
 
     public class CurantFunction
     {
-        public static double Fi(double arg, int i, double[] x)
+        public static double Fi(double arg, int i, IList<double> x)
         {
             double Step(int j) => x[j] - x[j - 1];
 
-            if (i == x.Length - 1)
+            if (i == x.Count - 1)
             {
                 if ((int)arg == 1)
                 {
@@ -83,7 +85,7 @@ namespace FEM
             throw new ArgumentOutOfRangeException(nameof(arg));
         }
 
-        public static double Derivative(double arg, int i, double[] x)
+        public static double Derivative(double arg, int i, IList<double> x)
         {
             double Step(int j) => x[j] - x[j - 1];
 
@@ -99,7 +101,7 @@ namespace FEM
                 }
             }
 
-            if (i == x.Length - 1)
+            if (i == x.Count - 1)
             {
                 if (arg > x[i - 1] && arg <= x[i])
                 {

@@ -34,11 +34,9 @@ namespace Plot
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
- 
-            this.chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart(); 
+            this.chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).BeginInit();
             this.SuspendLayout();
-            
             // 
             // chart1
             // 
@@ -56,23 +54,20 @@ namespace Plot
             this.chart1.Size = new System.Drawing.Size(521, 335);
             this.chart1.TabIndex = 1;
             this.chart1.Text = "chart1";
-            chart1.ChartAreas[0].AxisX.MajorGrid.LineWidth = 0;
-            chart1.ChartAreas[0].AxisY.MajorGrid.LineWidth = 0;
-            chart1.Series[0].ChartType = SeriesChartType.Line;
-            chart1.Series[0].BorderWidth = 2;
+            this.chart1.Click += new System.EventHandler(this.Chart1_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(521, 335);
-            this.Controls.Add(this.chart1); 
+            this.Controls.Add(this.chart1);
             this.Name = "Form1";
             this.Text = "Form1";
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized; 
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)(this.chart1)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout(); 
+
         }
 
         #endregion
