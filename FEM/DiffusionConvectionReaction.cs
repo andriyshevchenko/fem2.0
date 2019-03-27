@@ -61,34 +61,54 @@ namespace FEM
         double Uh_VNorm()
         {
             double sum = 0.0;
-            double a = 0.0;
-            sum += u[0] * (u[0]*BillinearForm(0,0) + u[1]*BillinearForm(0,1));
-            for (int k = 1; k < N-2; k++)
+            sum += u[0] * (u[0] * K[1][0] + u[1] * K[2][0]);
+            for (int k = 1; k < N - 2; k++)
             {
-                sum += u[k] * ();
+                sum += u[k] * (u[k - 1] * K[0][k - 1] + u[k] * K[1][k] + u[k + 1] * K[2][k]);
             }
-            sum += u[N-1] * (u[N-2] * K[N-1] [N-2] + u[N-1] * K[N-1][N-1]);
+            sum += u[N - 2] * (u[N - 3] * K[0][N - 3] + u[N - 2] * K[1][N - 2]);
             return sum;
         }
 
-        public void StartAdaptationAlgorithm(double allowedErrorInPercents)
+        public int StartAdaptationAlgorithm(double allowedErrorInPercents)
         {
-            double[] eta = new double[N - 1];
-            for (int i = 0; i < N - 1; i++)
+            int iterations = 0; 
+            while (true)
             {
-                double localError = (Sqrt(N) * ErrorVNorm_at_i_element(i) * 100.0) / 
-                                    Sqrt(Uh_VNorm() + ErrorVNorm());
-                eta[i] = localError;
-            }
-            for (int i = 0; i < N-1; i++)
-            {
-                if (eta[i] > allowedErrorInPercents)
+                iterations++;
+                List<double> eta = new List<double>(this.N - 1);
+                for (int i = 0; i < this.N - 1; i++)
                 {
-                    InsertFiniteElement((Elements[i+1]+Elements[i])/2, i);
+                    double localError = Sqrt(this.N) * ErrorVNorm_at_i_element(i) * 100.0 /
+                                        Sqrt(Uh_VNorm() + ErrorVNorm());
+                    eta.Add(localError);
                 }
+
+                int k = 0;
+                int i1 = 0;
+                int h_adaptation_count = 0;
+                while (k < eta.Count)
+                {
+                    if (eta[k] > allowedErrorInPercents)
+                    {
+                        h_adaptation_count++;
+                        double x = (Elements[i1 + 1] + Elements[i1]) / 2.0;
+                        InsertFiniteElement(x, i1);
+                        i1++;
+                    }
+                    k++;
+                    i1++;
+                }
+
+                if (h_adaptation_count == 0)
+                {
+                    break;
+                }
+
+                Solve();
+                Calc_Eh();
             }
-            Solve();
-            Calc_Eh();
+            return iterations;
         }
 
         public double Error(double x)
@@ -103,7 +123,7 @@ namespace FEM
 
         void InsertFiniteElement(double x, int order)
         {
-            Elements.Insert(order, x);
+            Elements.Insert(order + 1, x);
         }
 
         public void Calc_Eh()

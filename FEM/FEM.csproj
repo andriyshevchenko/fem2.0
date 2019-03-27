@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BoundaryCondition.cs" />
+    <Compile Include="B_BasisFunc.cs" />
     <Compile Include="CurantFunction.cs" />
     <Compile Include="DiffusionConvectionReaction.BoundaryCondition.cs" />
     <Compile Include="DiffusionConvectionReaction.cs" />

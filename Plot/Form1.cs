@@ -1,4 +1,6 @@
 ﻿using FEM;
+using MathNet.Numerics.Integration;
+using System;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -13,9 +15,20 @@ namespace Plot
 {
     public partial class Form1 : Form
     {
+        private double integrate_d_dx_2(int i)
+        {
+            double a = x[i];
+            double b = x[i + 1];
+            double h = b - a;
+            double a1 = x[i] + x[i + 1];
+            double antiderivative(double val) =>
+                (4.0*Pow(val,3))/3.0 - val*val*2*a1 +a1*a1*val;
+            return (16.0 * (antiderivative(b) - antiderivative(a))) / (h * h);
+        }
+
         private DiffusionConvectionReaction Task =
             new DiffusionConvectionReaction(
-                _values,
+                x,
                 new DiffusionConvectionReaction.BoundaryCondition(u0: 0, u1: 0),
                 f: x => Pow(Cos(PI * x), 2) + 0.005 * PI * PI * Cos(2 * PI * x),
                 mu: 0.0025, beta: 0, omega: 1.0, alpha: 1000.0
@@ -43,7 +56,8 @@ namespace Plot
                 MarkerStyle = MarkerStyle.None,
                 MarkerSize = 4,
                 BorderWidth = 1,
-                Name = "Eh(x)"
+                Name = "Eh(x)",
+                ToolTip = "Eh(x)",
             });
             chart1.Series.Add(new Series
             {
@@ -59,7 +73,7 @@ namespace Plot
                 ChartType = SeriesChartType.Line,
                 Color = Color.Gray,
                 BorderWidth = 1,
-                Name = "U(x)"
+                Name = ""
             });
 
             chart1.ChartAreas[0].AxisX.Minimum = 0;
@@ -71,21 +85,24 @@ namespace Plot
 
             Plot();
 
-            //chart1.Series[4].Points.DataBindXY(error_xasis, error_xasis.Select(x => Task.U(x) + Task.Error(x)).ToList());
+            Console.WriteLine(GaussLegendreRule.Integrate(k => B_BasisFunc.d_dx(k, 1, x)*B_BasisFunc.d_dx(k, 1, x), 0, 1, 5));
+            Console.WriteLine(integrate_d_dx_2(2));
+            //
         }
 
         private void Plot()
         {
-            chart1.Series[1].Points.DataBindXY(_values, array(_values.Select(x => Task.U(x))));
-            chart1.Series[2].Points.DataBindXY(error_xasis, error_xasis.Select(x => Task.Error(x)).ToList());
+            chart1.Series[1].Points.DataBindXY(Task.Elements, array(Task.Elements.Select(x => Task.U(x))));
+            chart1.Series[1].ToolTip = "Uh(x), Elements: " + Task.Elements.Count; 
+            chart1.Series[2].Points.DataBindXY(error_x_values, error_x_values.Select(x => Task.Error(x)).ToList());
         }
 
-        private static double[] error_xasis = Series(0.0, 1.0, 240);
-        private static double[] _values = Series(0.0, 1.0, 4);
+        private static double[] error_x_values = Series(0.0, 1.0, 240);
+        private static double[] x = Series(0.0, 1.0, 4);
 
         private void Chart1_Click(object sender, System.EventArgs e)
         {
-            this.Task.StartAdaptationAlgorithm(5);
+            this.Task.StartAdaptationAlgorithm(0.2);
             Plot();
         }
     }

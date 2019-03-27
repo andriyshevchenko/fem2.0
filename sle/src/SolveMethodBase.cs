@@ -10,8 +10,7 @@ namespace SystemOfEquations
 
             N = RightPart.GetLength(0);
             Answer = new double[N];
-        }
-
+        } 
 
         public double[] Answer { get; protected set; }
         protected double[][] LeftPart { get; }
