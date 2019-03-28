@@ -179,14 +179,10 @@ namespace FEM
         }
 
         public double Calc_a_Bi_Bj(int i)
-        {
-            var func = fun((double x) => Mu * B_BasisFunc.d_dx(x, i, Elements) * B_BasisFunc.d_dx(x, i, Elements)
-                                      + (Beta * B_BasisFunc.d_dx(x, i, Elements) + Omega * B_BasisFunc.B_i(x, i, Elements))
-                                      * B_BasisFunc.B_i(x, i, Elements));
-
-            var (a, b) = (Elements[i], Elements[i + 1]);
-
-            return GaussLegendreRule.Integrate(func, a, b, 5) + Alpha * B_BasisFunc.B_i(b, i, Elements) * B_BasisFunc.B_i(b, i, Elements);
+        { 
+            return Mu * B_BasisFunc.integrate_d_dx_2(i, Elements)
+                + Beta * B_BasisFunc.integrate_d_dx_fx(i, Elements)
+                + Omega * B_BasisFunc.integrate_fx_fx(i, Elements);
         }
 
         /// <summary>

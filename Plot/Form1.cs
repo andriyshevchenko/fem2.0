@@ -15,17 +15,6 @@ namespace Plot
 {
     public partial class Form1 : Form
     {
-        private double integrate_d_dx_2(int i)
-        {
-            double a = x[i];
-            double b = x[i + 1];
-            double h = b - a;
-            double a1 = x[i] + x[i + 1];
-            double antiderivative(double val) =>
-                (4.0*Pow(val,3))/3.0 - val*val*2*a1 +a1*a1*val;
-            return (16.0 * (antiderivative(b) - antiderivative(a))) / (h * h);
-        }
-
         private DiffusionConvectionReaction Task =
             new DiffusionConvectionReaction(
                 x,
@@ -83,11 +72,7 @@ namespace Plot
             chart1.ChartAreas[0].AxisX.MajorGrid.LineWidth = 0;
             chart1.ChartAreas[0].AxisY.MajorGrid.LineWidth = 0;
 
-            Plot();
-
-            Console.WriteLine(GaussLegendreRule.Integrate(k => B_BasisFunc.d_dx(k, 1, x)*B_BasisFunc.d_dx(k, 1, x), 0, 1, 5));
-            Console.WriteLine(integrate_d_dx_2(2));
-            //
+            Plot(); 
         }
 
         private void Plot()
@@ -98,11 +83,11 @@ namespace Plot
         }
 
         private static double[] error_x_values = Series(0.0, 1.0, 240);
-        private static double[] x = Series(0.0, 1.0, 4);
+        private static double[] x = Series(0.0, 1.0, 8);
 
         private void Chart1_Click(object sender, System.EventArgs e)
         {
-            this.Task.StartAdaptationAlgorithm(0.2);
+            this.Task.StartAdaptationAlgorithm(5);
             Plot();
         }
     }
