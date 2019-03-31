@@ -12,15 +12,19 @@ namespace FEM
             double ret = 0.0;
             if (i == j)
             {
-                ret = 1.0 / (x[i]-x[i-1]) + 1.0 / (x[i+1] - x[i]);
+                ret = 1.0 / (x[i] - x[i - 1]);
+                if (i + 1 < x.Count)
+                {
+                    ret += 1.0 / (x[i + 1] - x[i]);
+                }
             }
             else if (i == j - 1)
             {
-                ret = -1.0 / (x[i+1] - x[i]);
+                ret = -1.0 / (x[i + 1] - x[i]);
             }
             else if (i == j + 1)
             {
-                ret = -1.0 / (x[i]-x[i-1]);
+                ret = -1.0 / (x[i] - x[i - 1]);
             }
             return ret;
         }
@@ -28,14 +32,14 @@ namespace FEM
         public static double integrate_dx_fx(int i, int j, IList<double> x)
         {
             double ret = 0.0;
-            
+
             if (i == j)
             {
-                ret = 0.0;  
+                ret = 0.0;
             }
             else if (i == j - 1)
             {
-                ret = -0.5; 
+                ret = -0.5;
             }
             else if (i == j + 1)
             {
@@ -54,16 +58,19 @@ namespace FEM
 
             if (i == j)
             {
-                ret = (antiderivate(x[i], x[i - 1]) - antiderivate(x[i - 1], x[i - 1])) / Pow(x[i]-x[i-1],2)  +
-                      (antiderivate(x[i + 1], x[i + 1]) - antiderivate(x[i], x[i + 1])) / Pow(x[i+1]-x[i],2);
+                ret = (antiderivate(x[i], x[i - 1]) - antiderivate(x[i - 1], x[i - 1])) / Pow(x[i] - x[i - 1], 2);
+                if (i + 1 < x.Count)
+                {
+                    ret += (antiderivate(x[i + 1], x[i + 1]) - antiderivate(x[i], x[i + 1])) / Pow(x[i + 1] - x[i], 2);
+                }
             }
             else if (i == j - 1)
             {
-                ret = (antiderivate2(x[i + 1], x[i], x[i + 1]) - antiderivate2(x[i], x[i], x[i + 1])) / Pow(x[i+1]-x[i],2);
+                ret = (antiderivate2(x[i + 1], x[i], x[i + 1]) - antiderivate2(x[i], x[i], x[i + 1])) / Pow(x[i + 1] - x[i], 2);
             }
             else if (i == j + 1)
             {
-                ret = (antiderivate2(x[i], x[i - 1], x[i]) - antiderivate2(x[i - 1], x[i - 1], x[i])) / Pow(x[i] - x[i-1], 2);
+                ret = (antiderivate2(x[i], x[i - 1], x[i]) - antiderivate2(x[i - 1], x[i - 1], x[i])) / Pow(x[i] - x[i - 1], 2);
             }
             return ret;
         }

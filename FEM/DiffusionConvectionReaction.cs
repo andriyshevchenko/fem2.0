@@ -171,11 +171,10 @@ namespace FEM
         { 
             var (a, b) = GetIntegrationBounds(i, j);
 
-            return SimpsonRule.IntegrateComposite(
-                x => Mu * FiDx(i, x) * FiDx(j, x) +
-                    (Beta * FiDx(i, x) + Sigma * Fi(x, i)) * Fi(x, j),
-                a, b, 100
-            ) + Alpha * Fi(1,i) * Fi(1, j);
+            return Mu * CourantFunction.integrate_dx_dx(i, j, Elements) +
+                       Beta*CourantFunction.integrate_dx_fx(i,j,Elements) +
+                       Sigma*CourantFunction.integate_fx_fx(i,j,Elements) + 
+                       Alpha * Fi(1,i) * Fi(1, j);
         }
 
         public double Calc_a_Bi_Bj(int i)
@@ -196,17 +195,7 @@ namespace FEM
                        Alpha * B_BasisFunc.B_i(1, j, Elements) * Condition.U_;
 
             double a_uh_v = 0.0;
-            //for (int ind = 0; ind < u.Length; ind++)
-            //{
-            //    double item = u[ind];
-            //    double a1 = Elements[j];
-            //    double b1 = Elements[j + 1];
-            //    a_uh_v += item * GaussLegendreRule.Integrate(
-            //       x => Mu * FiDx(ind, x) * B_BasisFunc.d_dx(x, j, Elements) + (Beta * FiDx(ind, x) + Omega * Fi(x, ind))
-            //                     * B_BasisFunc.B_i(x, j, Elements), a1, b1, 2
-            //    ) +
-            //    Alpha * B_BasisFunc.B_i(b1, ind, Elements) * B_BasisFunc.B_i(b1, j, Elements);
-            //}
+             
             a_uh_v = GaussLegendreRule.Integrate(
                 x => Mu*CalculateFromBasisDx(x,u)*B_BasisFunc.d_dx(x,j,Elements) +
                      (Beta*CalculateFromBasisDx(x,u) + Sigma*U(x)) * B_BasisFunc.B_i(x, j, Elements),
