@@ -14,6 +14,17 @@ namespace FEM
             Elements = new List<double>(elements);
         }
 
+        protected double CalculateFromBasisDx(double x, double[] basis)
+        {
+            double sum = 0.0;
+            for (int i = 0; i < basis.Length; i++)
+            {
+                double fi = FiDx(i + 1, x);
+                sum += basis[i] * fi;
+            }
+            return sum;
+        }
+
         protected double CalculateFromBasis(double x, double[] basis)
         {
             double sum = 0.0;
@@ -27,34 +38,13 @@ namespace FEM
 
         protected double Fi(double x, int i)
         {
-            return CurantFunction.Fi(x, i, Elements);
+            return CourantFunction.Fi(x, i, Elements);
         }
 
         protected double FiDx(int i, double x)
         {
-            return CurantFunction.Derivative(x, i, Elements);
-        }
-        
-        protected double Product(int k, int s)
-        {
-            (double a, double b) = GetIntegrationBounds(k, s);
-            return GaussLegendreRule.Integrate(x => Fi(x, k) * Fi(x, s), a, b, 5);
-        }   
-
-        protected double L2Product(Func<double, double> f1, Func<double, double> f2)
-        {
-            return GaussLegendreRule.Integrate(x => f1(x) * f2(x), 0, 1, 5);
-        }
-
-        static double L2Norm(Func<double, double> f)
-        {
-            return Sqrt(GaussLegendreRule.Integrate(x => Pow(Abs(f(x)), 2), 0, 1, 5));
-        }
-
-        public static double ErrorEstimate(Func<double, double> f1, Func<double, double> f2)
-        {
-            return L2Norm(x => f1(x) - f2(x));
-        }
+            return CourantFunction.Derivative(x, i, Elements);
+        } 
 
         protected (double, double) GetIntegrationBoundsForLinearFunctional(int i)
         {

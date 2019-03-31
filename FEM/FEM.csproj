@@ -62,12 +62,8 @@
     <Compile Include="CurantFunction.cs" />
     <Compile Include="DiffusionConvectionReaction.BoundaryCondition.cs" />
     <Compile Include="DiffusionConvectionReaction.cs" />
-    <Compile Include="DiffusionConvectionReactionTwoDim.cs" />
     <Compile Include="FEMBase.cs" />
-    <Compile Include="FEMTwoDimBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SmallTransverseStringVibrations.BoundaryCondition.cs" />
-    <Compile Include="SmallTransverseStringVibrations.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\sle\SystemOfEquations.csproj">

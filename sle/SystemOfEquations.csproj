@@ -55,13 +55,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\ConjugateGradientMethod.cs" />
-    <Compile Include="src\GaussMethod.cs" />
     <Compile Include="src\IterationMethod.cs" />
-    <Compile Include="src\Jacobi.cs" />
-    <Compile Include="src\LUDecomposition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\RelaxationMethod.cs" />
     <Compile Include="src\SolveMethodBase.cs" />
     <Compile Include="src\TridiagonalSolve.cs" />
   </ItemGroup>

@@ -1,25 +1,26 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using static System.Math;
 
 namespace FEM
 {
-    public class CurantFunction
+    public class CourantFunction
     {
         public static double integrate_dx_dx(int i, int j, IList<double> x)
         {
             double ret = 0.0;
             if (i == j)
             {
-                ret = 2*(x[i+1]-x[i-1]);
+                ret = 1.0 / (x[i]-x[i-1]) + 1.0 / (x[i+1] - x[i]);
             }
             else if (i == j - 1)
             {
-                ret = x[i]-x[i+1];
+                ret = -1.0 / (x[i+1] - x[i]);
             }
             else if (i == j + 1)
             {
-                ret = x[i-1]-x[i];
+                ret = -1.0 / (x[i]-x[i-1]);
             }
             return ret;
         }
@@ -27,24 +28,18 @@ namespace FEM
         public static double integrate_dx_fx(int i, int j, IList<double> x)
         {
             double ret = 0.0;
-            double antiderivate(double value, double a) =>
-                    value*value/2.0 - a*value;
-
-            double antiderivate2(double value) =>
-                   -value*value/2.0 + x[i]*value;
-
+            
             if (i == j)
             {
-                ret = antiderivate(x[i],x[i-1]) - antiderivate(x[i-1],x[i-1]) +
-                      antiderivate(x[i+1],x[i+1]) - antiderivate(x[i],x[i+1]);
+                ret = 0.0;  
             }
             else if (i == j - 1)
             {
-                ret = antiderivate2(x[i+1]) - antiderivate2(x[i]);
+                ret = -0.5; 
             }
             else if (i == j + 1)
             {
-                ret = antiderivate2(x[i]) - antiderivate2(x[i-1]);
+                ret = 0.5;
             }
             return ret;
         }
@@ -53,22 +48,22 @@ namespace FEM
         {
             double ret = 0.0;
             double antiderivate(double value, double a) =>
-                a*a*value - a*value*value + value*value*value/3.0;
+                a * a * value - a * value * value + value * value * value / 3.0;
             double antiderivate2(double value, double a, double a1) =>
-                -value*value*value/3.0 + value*value*(a+a1)/2.0 - a*a1*value;
+                -value * value * value / 3.0 + value * value * (a + a1) / 2.0 - a * a1 * value;
 
             if (i == j)
             {
-                ret = antiderivate(x[i],x[i-1]) - antiderivate(x[i-1],x[i-1]) +
-                      antiderivate(x[i+1],x[i+1]) - antiderivate(x[i],x[i+1]);
+                ret = (antiderivate(x[i], x[i - 1]) - antiderivate(x[i - 1], x[i - 1])) / Pow(x[i]-x[i-1],2)  +
+                      (antiderivate(x[i + 1], x[i + 1]) - antiderivate(x[i], x[i + 1])) / Pow(x[i+1]-x[i],2);
             }
             else if (i == j - 1)
-            { 
-                ret = antiderivate2(x[i+1],x[i],x[i+1]) - antiderivate2(x[i],x[i],x[i+1]);
+            {
+                ret = (antiderivate2(x[i + 1], x[i], x[i + 1]) - antiderivate2(x[i], x[i], x[i + 1])) / Pow(x[i+1]-x[i],2);
             }
             else if (i == j + 1)
-            { 
-                ret = antiderivate2(x[i],x[i-1],x[i]) - antiderivate2(x[i-1],x[i-1],x[i]);
+            {
+                ret = (antiderivate2(x[i], x[i - 1], x[i]) - antiderivate2(x[i - 1], x[i - 1], x[i])) / Pow(x[i] - x[i-1], 2);
             }
             return ret;
         }
@@ -96,7 +91,7 @@ namespace FEM
 
             if (i == 0)
             {
-                if (arg >= x[0] && arg <= x[1])
+                if (arg > x[0] && arg <= x[1])
                 {
                     return ((x[1] - arg) / Step(1));
                 }
@@ -130,9 +125,9 @@ namespace FEM
 
             if (i == 0)
             {
-                if (arg >= x[0] && arg <= x[1])
+                if (arg > x[0] && arg <= x[1])
                 {
-                    return -1 / Step(1);
+                    return -1.0 / Step(1);
                 }
                 else
                 {
@@ -144,7 +139,7 @@ namespace FEM
             {
                 if (arg > x[i - 1] && arg <= x[i])
                 {
-                    return 1 / Step(i);
+                    return 1.0 / Step(i);
                 }
                 else
                 {
@@ -154,12 +149,12 @@ namespace FEM
 
             if (x[i - 1] < arg && arg <= x[i])
             {
-                return 1 / Step(i);
+                return 1.0 / Step(i);
             }
 
             if (x[i] < arg && arg <= x[i + 1])
             {
-                return -1 / Step(i + 1);
+                return -1.0 / Step(i + 1);
             }
             else
             {
