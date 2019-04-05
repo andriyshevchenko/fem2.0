@@ -1,7 +1,5 @@
-﻿using MathNet.Numerics.Integration;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using static System.Math;
 namespace FEM
 {
     public class FEMBase
@@ -44,46 +42,6 @@ namespace FEM
         protected double FiDx(int i, double x)
         {
             return CourantFunction.Derivative(x, i, Elements);
-        } 
-
-        protected (double, double) GetIntegrationBoundsForLinearFunctional(int i)
-        {
-            double a = Elements[i - 1];
-            double b;
-            if (i == N - 1)
-            {
-                b = Elements[i];
-            }
-            else
-            {
-                b = Elements[i + 1];
-            }
-
-            return (a, b);
-        }
-
-        protected (double, double) GetIntegrationBounds(int i, int j)
-        {
-            double a;
-            double b;
-
-            if (i > j)
-            {
-                a = Elements[j];
-                b = Elements[i];
-            }
-            else if (i < j)
-            {
-                a = Elements[i];
-                b = Elements[j];
-            }
-            else if (i == j)
-            {
-                a = Elements[i - 1];
-                b = Elements[i == N - 1 ? i : i + 1];
-            }
-            else throw new ArgumentOutOfRangeException(nameof(i), nameof(j));
-            return (a, b);
-        }
+        }  
     }
 }

@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Linq;
 using static System.Collections.Generic.SeriesCreate;
 using static System.Collections.Generic.Create;
-using static System.Functional.Func;
 using static System.Math;
 using SystemOfEquations;
 using MathNet.Numerics.Integration;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace FEM
 {
@@ -16,6 +16,7 @@ namespace FEM
         public double Beta;
         public double Sigma;
         public double Alpha;
+        public IList<double> Eta;
         public Func<double, double> F;
         public BoundaryCondition Condition;
 
@@ -47,7 +48,7 @@ namespace FEM
 
             for (int k = 0; k < N - 1; k++)
             {
-                sum += ErrorVNorm_at_i_element(k);
+                sum += Pow(ErrorVNorm_at_i_element(k), 2);
             }
 
             return sum;
@@ -55,46 +56,54 @@ namespace FEM
 
         double ErrorVNorm_at_i_element(int i)
         {
-            return Pow(e_coefficients[i], 2) * Calc_a_Bi_Bj(i);
+            return Abs(e_coefficients[i]) * Sqrt(Calc_a_Bi_Bj(i));
         }
 
-        double Uh_VNorm()
+        double Uh_VNorm_Sqr()
         {
+            return SimpsonRule.IntegrateComposite(x =>
+                Mu * Pow(Udx(x), 2) + Beta * Udx(x) * U(x) + Sigma * Pow(U(x), 2), 0, 1, 10000
+            ) + Alpha * Pow(U(1), 2);
             double sum = 0.0;
             sum += u[0] * (u[0] * K[1][0] + u[1] * K[2][0]);
-            for (int k = 1; k < N - 2; k++)
+            for (int k = 1; k < N - 3; k++)
             {
                 sum += u[k] * (u[k - 1] * K[0][k - 1] + u[k] * K[1][k] + u[k + 1] * K[2][k]);
             }
             sum += u[N - 2] * (u[N - 3] * K[0][N - 3] + u[N - 2] * K[1][N - 2]);
-            return sum; 
+            return sum;
         }
 
-        public List<double> StartAdaptationAlgorithm(double allowedErrorInPercents)
+        public async Task StartAdaptationAlgorithm(double allowedErrorInPercents, Func<Task> progress)
         {
-            List<double> eta;
             while (true)
-            { 
-                eta = new List<double>(this.N - 1);
-                double errorVNorm = ErrorVNorm();
-                double denom = Sqrt(Uh_VNorm() + errorVNorm);
-                for (int i = 0; i < this.N - 1; i++)
-                {
-                    double localError = Sqrt(this.N) * ErrorVNorm_at_i_element(i) * 100.0 / denom;
-                    eta.Add(localError);
-                }
-
+            {
                 int k = 0;
                 int i1 = 0;
                 int h_adaptation_count = 0;
-                while (k < eta.Count)
+                while (k < Eta.Count)
                 {
-                    if (eta[k] > allowedErrorInPercents)
+                    if (Eta[k] > allowedErrorInPercents)
                     {
                         h_adaptation_count++;
                         double x = (Elements[i1 + 1] + Elements[i1]) / 2.0;
                         InsertFiniteElement(x, i1);
                         i1++;
+                        //h_adaptation_count++;
+
+                        //int numInsert = (int) Floor(Sqrt(eta[k] / allowedErrorInPercents) / 2.0);
+                        //if (numInsert == 0)
+                        //{
+                        //    numInsert = 1;
+                        //}
+
+                        //double step = (Elements[i1 + 1] - Elements[i1]) / (numInsert + 1);
+
+                        //for (int p = 0; p < numInsert; p++)
+                        //{
+                        //    InsertFiniteElement(Elements[i1] + step, i1);
+                        //    i1++;
+                        //}
                     }
                     k++;
                     i1++;
@@ -107,8 +116,22 @@ namespace FEM
 
                 Solve();
                 Calc_Eh();
+                CalcEta();
+
+                await progress();
             }
-            return eta;
+        }
+
+        public void CalcEta()
+        {
+            Eta = new List<double>(this.N - 1);
+            double errorVNorm = ErrorVNorm();
+            double denom = Sqrt(Uh_VNorm_Sqr() + errorVNorm);
+            for (int i = 0; i < this.N - 1; i++)
+            {
+                double localError = Sqrt(this.N - 1) * ErrorVNorm_at_i_element(i) * 100.0 / denom;
+                Eta.Add(localError);
+            }
         }
 
         public double Error(double x)
@@ -135,9 +158,14 @@ namespace FEM
             }
         }
 
+        public double Udx(double x)
+        {
+            return CalculateFromBasisDx(x, u);
+        }
+
         public double U(double x)
         {
-            return CalculateFromBasis(x, u);  
+            return CalculateFromBasis(x, u);
         }
 
         public void Solve()
@@ -150,38 +178,39 @@ namespace FEM
 
         double[][] FillMatrix()
         {
-            return array(Series(2, N - 2, i => BillinearForm(i, i - 1)),
-                         Series(1, N - 1, i => BillinearForm(i, i)),
-                         Series(1, N - 2, i => BillinearForm(i, i + 1)));
+            return array(Series(2, N - 3, i => BillinearForm(i, i - 1)),
+                         Series(1, N - 2, i => BillinearForm(i, i)),
+                         Series(1, N - 3, i => BillinearForm(i, i + 1)));
         }
 
         public double[] FillRightPartVector()
         {
-            return Series(1, N - 1, L);
+            return Series(1, N - 2, L);
         }
-
 
         public double L(int i)
         {
-            var (a, b) = GetIntegrationBoundsForLinearFunctional(i);
-            return SimpsonRule.IntegrateComposite(x => F(x) * Fi(x, i), a, b, 100) + Alpha * Fi(1, i) * Condition.U_;
+            double a = Elements[i - 1];
+            double b = Elements[i];
+            double c = Elements[i + 1];
+            double fp12(double l, double r) => F((l + r) / 2.0);
+            return fp12(a, b) * (b - a) / 2.0 + fp12(b, c) * (c - b) / 2.0;
         }
 
         public double BillinearForm(int i, int j)
-        { 
-            var (a, b) = GetIntegrationBounds(i, j);
-
+        {
             return Mu * CourantFunction.integrate_dx_dx(i, j, Elements) +
-                       Beta*CourantFunction.integrate_dx_fx(i,j,Elements) +
-                       Sigma*CourantFunction.integate_fx_fx(i,j,Elements) + 
-                       Alpha * Fi(1,i) * Fi(1, j);
+                       Beta * CourantFunction.integrate_dx_fx(i, j, Elements) +
+                       Sigma * CourantFunction.integate_fx_fx(i, j, Elements) +
+                       Alpha * Fi(1, i) * Fi(1, j);
         }
 
         public double Calc_a_Bi_Bj(int i)
-        { 
+        {
             return Mu * B_BasisFunc.integrate_d_dx_2(i, Elements)
                 + Beta * B_BasisFunc.integrate_d_dx_fx(i, Elements)
-                + Sigma * B_BasisFunc.integrate_fx_fx(i, Elements);
+                + Sigma * B_BasisFunc.integrate_fx_fx(i, Elements)
+                + Alpha * Pow(B_BasisFunc.B_i(1, i, Elements), 2);
         }
 
         /// <summary>
@@ -189,18 +218,39 @@ namespace FEM
         /// </summary>
         public double Calc_RO_Uh(int j)
         {
-            var l_bj = GaussLegendreRule.Integrate(
-                          x => F(x) * B_BasisFunc.B_i(x, j, Elements), Elements[j], Elements[j + 1], 2
-                       ) +
-                       Alpha * B_BasisFunc.B_i(1, j, Elements) * Condition.U_;
+            var l_bj = (2.0 * (Elements[j + 1] - Elements[j]) * F((Elements[j + 1] + Elements[j]) / 2.0)) / 3.0 +
+                       Alpha * Condition.U_;
 
             double a_uh_v = 0.0;
-             
-            a_uh_v = GaussLegendreRule.Integrate(
-                x => Mu*CalculateFromBasisDx(x,u)*B_BasisFunc.d_dx(x,j,Elements) +
-                     (Beta*CalculateFromBasisDx(x,u) + Sigma*U(x)) * B_BasisFunc.B_i(x, j, Elements),
-                Elements[j], Elements[j+1], 2
-            ) + Alpha * U(1) * B_BasisFunc.B_i(1, j, Elements);
+
+            /////Білінійна форма c(Fi_i,B_i+12)
+            double c(int i, int k)
+            {
+                double ret = 0.0;
+                if (i == k - 1)
+                {
+                    ret = (Beta * 2.0) / 3.0 + Sigma * (Elements[i + 1] - Elements[i]) / 3.0;
+                }
+                if (i == k)
+                {
+                    ret = (-Beta * 2.0) / 3.0 + Sigma * (Elements[i + 1] - Elements[i]) / 3.0;
+                }
+                return ret;
+            }
+
+            if (j == 0)
+            {
+                a_uh_v = u[0] * c(0, 1) + Alpha * Condition.U1 * B_BasisFunc.B_i(1, j, Elements);
+            }
+            else if (j == N - 2)
+            {
+                a_uh_v = u[j - 1] * c(j, j) + Alpha * Condition.U1 * B_BasisFunc.B_i(1, j, Elements);
+            }
+            else
+            {
+                a_uh_v = u[j - 1] * c(j, j) + u[j] * c(j, j + 1) + Alpha * Condition.U1 * B_BasisFunc.B_i(1, j, Elements);
+            }
+
             return l_bj - a_uh_v;
         }
     }
