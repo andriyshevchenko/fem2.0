@@ -38,11 +38,11 @@ namespace FEM
             }
             else if (i == j - 1)
             {
-                ret = -0.5;
+                ret = 0.5;
             }
             else if (i == j + 1)
             {
-                ret = 0.5;
+                ret = -0.5;
             }
             return ret;
         }
@@ -51,9 +51,9 @@ namespace FEM
         {
             double ret = 0.0;
             double antiderivate(double value, double a) =>
-                a * a * value - a * value * value + value * value * value / 3.0;
+                (a * a * value) - (a * value * value) + (value * value * value / 3.0);
             double antiderivate2(double value, double a, double a1) =>
-                -value * value * value / 3.0 + value * value * (a + a1) / 2.0 - a * a1 * value;
+                (-value * value * value / 3.0) + (value * value * (a + a1) / 2.0) - (a * a1 * value);
 
             if (i == j)
             {

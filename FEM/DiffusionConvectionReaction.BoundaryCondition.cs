@@ -4,9 +4,9 @@
     {
         public struct BoundaryCondition
         {
-            public BoundaryCondition(double u0, double u1)
+            public BoundaryCondition(double u_, double u1)
             {
-                U_ = u0;
+                U_ = u_;
                 U1 = u1;
             }
             public double U1 { get; }

@@ -28,18 +28,18 @@ namespace SystemOfEquations
 
             for (int i = 1; i < n - 1; i++)
             {
-                c_[i] = c[i] / (b[i] - c_[i - 1] * a[i]);
+                c_[i] = c[i] / (b[i] - (c_[i - 1] * a[i]));
             }
 
             for (int i = 1; i < n; i++)
             {
-                d_[i] = (rightPart[i] - d_[i - 1] * a[i]) / (b[i] - c_[i - 1] * a[i]);
+                d_[i] = (rightPart[i] - (d_[i - 1] * a[i])) / (b[i] - (c_[i - 1] * a[i]));
             }
 
             Answer[n - 1] = d_[n - 1];
             for (int i = n - 2; i >= 0; i--)
             {
-                Answer[i] = d_[i] - c_[i] * Answer[i + 1];
+                Answer[i] = d_[i] - (c_[i] * Answer[i + 1]);
             }
         }
 

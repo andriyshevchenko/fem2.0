@@ -16,20 +16,20 @@ namespace Plot
 {
     public partial class Form1 : Form
     {
-        private DiffusionConvectionReaction Task =
+        private DiffusionConvectionReaction Task2  =
             new DiffusionConvectionReaction(
                 x,
-                new DiffusionConvectionReaction.BoundaryCondition(u0: 0, u1: 0),
-                f: x => Pow(Cos(PI*x),2) + 0.005*PI*PI*Cos(2*PI*x),
+                new DiffusionConvectionReaction.BoundaryCondition(u_: 0, u1: 0),
+                f: x => Pow(Cos(PI*x),2) + (0.005*PI*PI*Cos(2*PI*x)),
                 mu: 0.0025, beta: 0, sigma: 1.0, alpha: 1000.0
             );
 
-        private DiffusionConvectionReaction Task2 =
+        private DiffusionConvectionReaction Task  =
             new DiffusionConvectionReaction(
                 x,
-                new DiffusionConvectionReaction.BoundaryCondition(u0: 0, u1: 0),
+                new DiffusionConvectionReaction.BoundaryCondition(u_: 0, u1: 0),
                 f: x => 100,
-                mu: 1, beta: -100, sigma: 0, alpha: 1000.0
+                mu: 1, beta: 100, sigma: 0, alpha: 1000.0
             );
 
         public Form1()
@@ -87,9 +87,7 @@ namespace Plot
             chart1.ChartAreas[0].AxisX.MajorGrid.LineWidth = 0;
             chart1.ChartAreas[0].AxisY.MajorGrid.LineWidth = 0;
 
-            Plot();
-
-            Console.WriteLine(CourantFunction.integate_fx_fx(1, 0, x));
+            Plot(); 
         }
 
         private void Plot()
@@ -100,16 +98,17 @@ namespace Plot
             chart1.Series[4].Points.DataBindXY(Task.Elements.Take(Task.Elements.Count - 1).ToList(), Task.Eta.Select(item => item / 100.0).ToList());
         }
 
-        private static double[] error_x_values = Series(0.0, 1.0, 240);
+        private static double[] error_x_values = Series(0.0, 1.0, 2000);
         private static double[] x = Series(0.0, 1.0, 5);
 
         private async void Chart1_Click(object sender, System.EventArgs e)
         {
-            await this.Task.StartAdaptationAlgorithm(10, () =>
+            await this.Task.StartAdaptationAlgorithm(1, () =>
             {
                 Plot();
                 return System.Threading.Tasks.Task.Delay(1000);
             });
+            
             //Plot();
         }
     }
