@@ -1,5 +1,6 @@
-﻿using System.Windows.Forms;
-using System.Windows.Forms.DataVisualization.Charting;
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace Plot
 {
@@ -9,6 +10,38 @@ namespace Plot
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
+        private static readonly Color color = Color.FromArgb(246, 247, 250);
+        private Form report = new Form()
+        {
+            WindowState = FormWindowState.Maximized,
+            BackColor = color, 
+        };
+
+        private DataGridView table = new DataGridView()
+        {
+            Font = new Font("Segoe UI", 12, FontStyle.Regular),
+            ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+            SelectionMode = DataGridViewSelectionMode.CellSelect,
+            AllowUserToAddRows = false,
+            AllowUserToDeleteRows = false,
+            AllowUserToOrderColumns = true, 
+            MultiSelect = false,
+            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells,
+            AllowUserToResizeColumns = true,
+            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+            AllowUserToResizeRows = false,
+            RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing,
+            EditMode = DataGridViewEditMode.EditProgrammatically,
+            ReadOnly = true,
+            Dock = DockStyle.Fill,
+            BorderStyle = BorderStyle.None,
+            BackgroundColor = color,
+            ForeColor = Color.Black,
+            GridColor = color,
+            RowHeadersVisible = false,
+            CellBorderStyle = DataGridViewCellBorderStyle.Single,
+        };
 
         /// <summary>
         /// Clean up any resources being used.
@@ -31,6 +64,61 @@ namespace Plot
         /// </summary>
         private void InitializeComponent()
         {
+            //
+            // table
+            //
+            table.Columns.Clear();
+            table.Columns.AddRange(new DataGridViewColumn[]
+            {
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "Elements",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
+                },
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "New elements",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
+                },
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "||Eh||",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
+                },
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "||Uh||",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
+                },
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "Max η",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
+                },
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "P0",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
+                },
+                new DataGridViewImageColumn()
+                {
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
+                }
+            });
+            table.RowsAdded += (sender, args) =>
+            {
+                foreach (DataGridViewCell item in table.Rows[args.RowIndex].Cells)
+                {
+                    item.Style.BackColor = color;
+                }
+
+                table.FirstDisplayedScrollingRowIndex = table.RowCount - 1;
+            };
+            table.SelectionChanged += (object sender, EventArgs args) =>
+            {
+                table.ClearSelection(); 
+            };
+
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
@@ -71,7 +159,7 @@ namespace Plot
         }
 
         #endregion
-         
+
         private System.Windows.Forms.DataVisualization.Charting.Chart chart1;
     }
 }
