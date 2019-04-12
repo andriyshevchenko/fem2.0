@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using static System.Collections.Generic.Create;
@@ -34,11 +33,15 @@ namespace Plot
 
         public Form1()
         {
+            report.Controls.Add(table);
+            report.Show();
+            this.WindowState = FormWindowState.Minimized;
+
             InitializeComponent();
 
             Task.Solve();
             Task.Calc_Eh();
-            Task.CalcEta();
+            List<string> outputdata = Task.CalcEta();
 
             chart1.Series.Add(new Series
             {
@@ -87,7 +90,22 @@ namespace Plot
             chart1.ChartAreas[0].AxisX.MajorGrid.LineWidth = 0;
             chart1.ChartAreas[0].AxisY.MajorGrid.LineWidth = 0;
 
-            Plot(); 
+            Plot();
+
+            this.Load += (sender, args) =>
+            {
+                this.table.Rows.Add(OutputData(outputdata));
+            };
+        }
+
+        private object[] OutputData(List<string> outputdata)
+        {
+            Bitmap plot = new Bitmap(Width, Height);
+            chart1.DrawToBitmap(plot, new Rectangle(0, 0, Width, Height));
+            object[] values = new object[7];
+            outputdata.ToArray().CopyTo(values, 0);
+            values[values.Length-1] = new Bitmap(plot, new Size((int)(Width * 0.4), (int)(Height * 0.4)));
+            return values;
         }
 
         private void Plot()
@@ -99,16 +117,16 @@ namespace Plot
         }
 
         private static double[] error_x_values = Series(0.0, 1.0, 2000);
-        private static double[] x = Series(0.0, 1.0, 5);
+        private static double[] x = Series(0.0, 1.0, 3);
 
         private async void Chart1_Click(object sender, System.EventArgs e)
         {
-            await this.Task.StartAdaptationAlgorithm(1, () =>
+            await this.Task.StartAdaptationAlgorithm(1, (list) =>
             {
                 Plot();
+                this.table.Rows.Add(OutputData(list));
                 return System.Threading.Tasks.Task.Delay(1000);
             });
-            
             //Plot();
         }
     }

@@ -3,9 +3,7 @@ using static System.Collections.Generic.SeriesCreate;
 using static System.Collections.Generic.Create;
 using static System.Math;
 using SystemOfEquations;
-using MathNet.Numerics.Integration;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace FEM
@@ -23,6 +21,9 @@ namespace FEM
         private double[] u;
         private double[][] K;
         private List<double> e_coefficients;
+        private double lastAddedElements;
+        private int N0;
+        private double E0;
 
         public DiffusionConvectionReaction(
             double[] elements,
@@ -34,6 +35,7 @@ namespace FEM
             double alpha
           ) : base(elements)
         {
+            N0 = elements.Length-1;
             Condition = condition;
             F = f;
             Mu = mu;
@@ -62,16 +64,23 @@ namespace FEM
         double Uh_VNorm_Sqr()
         {
             double sum = 0.0;
-            sum += u[0] * ((u[0] * K[1][0]) + (u[1] * K[2][0]));
-            for (int k = 1; k < N - 3; k++)
+            if (N == 3)
             {
-                sum += u[k] * ((u[k - 1] * K[0][k - 1]) + (u[k] * K[1][k]) + (u[k + 1] * K[2][k]));
+                sum = u[0] * (u[0] * K[1][0]);
             }
-            sum += u[N - 3] * ((u[N - 4] * K[0][N - 4]) + (u[N - 3] * K[1][N - 3]));
+            else
+            {
+                sum += u[0] * ((u[0] * K[1][0]) + (u[1] * K[2][0]));
+                for (int k = 1; k < N - 3; k++)
+                {
+                    sum += u[k] * ((u[k - 1] * K[0][k - 1]) + (u[k] * K[1][k]) + (u[k + 1] * K[2][k]));
+                }
+                sum += u[N - 3] * ((u[N - 4] * K[0][N - 4]) + (u[N - 3] * K[1][N - 3]));
+            }
             return sum;
         }
 
-        public async Task StartAdaptationAlgorithm(double allowedErrorInPercents, Func<Task> progress)
+        public async Task StartAdaptationAlgorithm(double allowedErrorInPercents, Func<List<string>, Task> progress)
         {
             while (true)
             {
@@ -105,7 +114,7 @@ namespace FEM
                     k++;
                     i1++;
                 }
-
+                lastAddedElements = h_adaptation_count;
                 if (h_adaptation_count == 0)
                 {
                     break;
@@ -113,27 +122,43 @@ namespace FEM
 
                 Solve();
                 Calc_Eh();
-                CalcEta();
+                List<string> outputData = CalcEta();
 
-                await progress();
+                await progress(outputData);
             }
         }
 
-        public void CalcEta()
+        public List<string> CalcEta()
         {
             Eta = new List<double>(this.N - 1);
+
             double errorVNorm = ErrorVNorm();
-            Console.WriteLine("||eh|| = " + Sqrt(errorVNorm));
+            if (N - 1 == N0)
+            {
+                E0 = Sqrt(errorVNorm);
+            }
             double uhNorm = Uh_VNorm_Sqr();
-            Console.WriteLine("||uh|| = " + Sqrt(uhNorm));
-            Console.WriteLine("elements: " + (this.N-1));
-            Console.WriteLine();
             double denom = Sqrt(uhNorm + errorVNorm);
+            double maxerror = 0.0;
+
             for (int i = 0; i < this.N - 1; i++)
             {
                 double localError = Sqrt((N - 1) * ErrorVNorm_at_i_element(i)) * 100.0 / denom;
+                if (maxerror < localError)
+                {
+                    maxerror = localError;
+                }
                 Eta.Add(localError);
             }
+            return new List<string>()
+            {
+                (N-1).ToString(),
+                lastAddedElements.ToString(),
+                Sqrt(uhNorm).ToString(),
+                Sqrt(errorVNorm).ToString(),
+                string.Format("{0:0.0000}%", maxerror),
+                string.Format("{0:0.0000}", (Log(E0)-Log(Sqrt(errorVNorm)))/(Log(N-1)-Log(N0)))
+            };
         }
 
         public double Error(double x)
