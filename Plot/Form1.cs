@@ -15,7 +15,7 @@ namespace Plot
 {
     public partial class Form1 : Form
     {
-        private DiffusionConvectionReaction Task  =
+        private DiffusionConvectionReaction Task2  =
             new DiffusionConvectionReaction(
                 x,
                 new DiffusionConvectionReaction.BoundaryCondition(u_: 0, u1: 0),
@@ -23,7 +23,7 @@ namespace Plot
                 mu: 0.0025, beta: 0, sigma: 1.0, alpha: 1000.0
             );
 
-        private DiffusionConvectionReaction Task2  =
+        private DiffusionConvectionReaction Task  =
             new DiffusionConvectionReaction(
                 x,
                 new DiffusionConvectionReaction.BoundaryCondition(u_: 0, u1: 0),
@@ -102,7 +102,7 @@ namespace Plot
         {
             Bitmap plot = new Bitmap(Width, Height);
             chart1.DrawToBitmap(plot, new Rectangle(0, 0, Width, Height));
-            object[] values = new object[7];
+            object[] values = new object[8];
             outputdata.ToArray().CopyTo(values, 0);
             values[values.Length-1] = new Bitmap(plot, new Size((int)(Width * 0.4), (int)(Height * 0.4)));
             return values;
@@ -117,11 +117,11 @@ namespace Plot
         }
 
         private static double[] error_x_values = Series(0.0, 1.0, 2000);
-        private static double[] x = Series(0.0, 1.0, 3);
+        private static double[] x = Series(0.0, 1.0, 8);
 
         private async void Chart1_Click(object sender, System.EventArgs e)
         {
-            await this.Task.StartAdaptationAlgorithm(1, (list) =>
+            await this.Task.StartAdaptationAlgorithm(3, (list) =>
             {
                 Plot();
                 this.table.Rows.Add(OutputData(list));

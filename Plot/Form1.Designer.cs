@@ -20,7 +20,7 @@ namespace Plot
 
         private DataGridView table = new DataGridView()
         {
-            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
             ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
             SelectionMode = DataGridViewSelectionMode.CellSelect,
             AllowUserToAddRows = false,
@@ -41,7 +41,7 @@ namespace Plot
             ForeColor = Color.Black,
             GridColor = color,
             RowHeadersVisible = false,
-            CellBorderStyle = DataGridViewCellBorderStyle.Single,
+            CellBorderStyle = DataGridViewCellBorderStyle.Single
         };
 
         /// <summary>
@@ -100,6 +100,11 @@ namespace Plot
                 {
                     HeaderText = "P",
                     AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCellsExceptHeader
+                },
+                new DataGridViewTextBoxColumn()
+                {
+                    HeaderText = "Integral",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells
                 },
                 new DataGridViewImageColumn()
                 {

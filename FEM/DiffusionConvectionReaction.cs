@@ -18,6 +18,10 @@ namespace FEM
         public Func<double, double> F;
         public BoundaryCondition Condition;
 
+        /// <summary>
+        /// К-сть інтегралів.
+        /// </summary>
+        private double nIntegrals;
         private double[] u;
         private double[][] K;
         private List<double> e_coefficients;
@@ -35,13 +39,14 @@ namespace FEM
             double alpha
           ) : base(elements)
         {
-            N0 = elements.Length-1;
+            N0 = elements.Length - 1;
             Condition = condition;
             F = f;
             Mu = mu;
             Beta = beta;
             Sigma = sigma;
             Alpha = alpha;
+            nIntegrals = N - 1;
         }
 
         double ErrorVNorm()
@@ -55,10 +60,10 @@ namespace FEM
 
             return sum;
         }
-        
+
         double ErrorVNorm_at_i_element(int i)
         {
-            return Pow(e_coefficients[i],2) * Calc_a_Bi_Bj(i);
+            return Pow(e_coefficients[i], 2) * Calc_a_Bi_Bj(i);
         }
 
         double Uh_VNorm_Sqr()
@@ -82,38 +87,40 @@ namespace FEM
 
         public async Task StartAdaptationAlgorithm(double allowedErrorInPercents, Func<List<string>, Task> progress)
         {
+            int iter = 0; 
             while (true)
-            {
+            { 
+                iter++;
                 int k = 0;
                 int i1 = 0;
                 int h_adaptation_count = 0;
                 while (k < Eta.Count)
                 {
-                    if (Eta[k] > allowedErrorInPercents*1.61)
+                    if (Eta[k] > allowedErrorInPercents * 1.61)
                     {
-                        h_adaptation_count++;
-                        double x = (Elements[i1 + 1] + Elements[i1]) / 2.0;
-                        InsertFiniteElement(x, i1);
-                        i1++;
                         //h_adaptation_count++;
+                        //double x = (Elements[i1 + 1] + Elements[i1]) / 2.0;
+                        //InsertFiniteElement(x, i1);
+                        //i1++;
+                        int numInsert = (int)Floor((Eta[k] / allowedErrorInPercents) / 5.0);
+                        if (numInsert == 0)
+                        {
+                            numInsert = 1;
+                        }
 
-                        //int numInsert = (int) Floor(Sqrt(eta[k] / allowedErrorInPercents) / 2.0);
-                        //if (numInsert == 0)
-                        //{
-                        //    numInsert = 1;
-                        //}
+                        double step = (Elements[i1 + 1] - Elements[i1]) / (numInsert + 1);
 
-                        //double step = (Elements[i1 + 1] - Elements[i1]) / (numInsert + 1);
-
-                        //for (int p = 0; p < numInsert; p++)
-                        //{
-                        //    InsertFiniteElement(Elements[i1] + step, i1);
-                        //    i1++;
-                        //}
+                        for (int p = 0; p < numInsert; p++)
+                        {
+                            h_adaptation_count++;
+                            InsertFiniteElement(Elements[i1] + step, i1);
+                            i1++;
+                        }
                     }
                     k++;
                     i1++;
                 }
+                Console.WriteLine("Iteration: " + iter);
                 lastAddedElements = h_adaptation_count;
                 if (h_adaptation_count == 0)
                 {
@@ -123,6 +130,7 @@ namespace FEM
                 Solve();
                 Calc_Eh();
                 List<string> outputData = CalcEta();
+                nIntegrals += N - 1;
 
                 await progress(outputData);
             }
@@ -157,7 +165,8 @@ namespace FEM
                 Sqrt(uhNorm).ToString(),
                 Sqrt(errorVNorm).ToString(),
                 string.Format("{0:0.0000}%", maxerror),
-                string.Format("{0:0.0000}", (Log(E0)-Log(Sqrt(errorVNorm)))/(Log(N-1)-Log(N0)))
+                string.Format("{0:0.0000}", (Log(E0)-Log(Sqrt(errorVNorm)))/(Log(N-1)-Log(N0))),
+                (9*nIntegrals).ToString()
             };
         }
 
@@ -250,7 +259,6 @@ namespace FEM
             var l_bj = ((2.0 * h * F(xj12)) / 3.0) +
                        (Alpha * Condition.U_);
 
-            double a_uh_v = 0.0;
 
             /////Білінійна форма c(Fi_i,B_i+12)
             double c(int i, int k)
@@ -265,8 +273,9 @@ namespace FEM
                     ret = ((-Beta * 2.0) / 3.0) + (Sigma * (Elements[i + 1] - Elements[i]) / 3.0);
                 }
                 return ret;
-            }
+            } 
 
+            double a_uh_v = 0.0;
             if (j == 0)
             {
                 a_uh_v = (u[0] * c(0, 1)) + (Alpha * Condition.U1 * B_BasisFunc.B_i(1, j, Elements));
