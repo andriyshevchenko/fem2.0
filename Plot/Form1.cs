@@ -20,15 +20,15 @@ namespace Plot
                 x,
                 new DiffusionConvectionReaction.BoundaryCondition(u_: 0, u1: 0),
                 f: x => Pow(Cos(PI*x),2) + (0.005*PI*PI*Cos(2*PI*x)),
-                mu: 0.0025, beta: 0, sigma: 1.0, alpha: 1000.0
+                mu: x => 0.0025, beta: x => 0, sigma: x => 1.0, alpha: 1000.0
             );
 
         private DiffusionConvectionReaction Task  =
             new DiffusionConvectionReaction(
                 x,
                 new DiffusionConvectionReaction.BoundaryCondition(u_: 0, u1: 0),
-                f: x => 100,
-                mu: 1, beta: 100, sigma: 0, alpha: 1000.0
+                f: x => 1000800*Math.Pow(x,4),
+                mu: x => 1, beta: x => 3000 * ((2.0/3)), sigma: x => 3800, alpha: 1000.0
             );
 
         public Form1()
@@ -110,18 +110,18 @@ namespace Plot
 
         private void Plot()
         {
-            chart1.Series[1].Points.DataBindXY(Task.Elements, array(Task.Elements.Select(x => Task.U(x))));
+            chart1.Series[1].Points.DataBindXY(Task.Elements, array(Task.Elements.Select(x => Task.U(x)/50)));
             chart1.Series[1].ToolTip = "Uh(x), Elements: " + Task.Elements.Count; 
             chart1.Series[2].Points.DataBindXY(error_x_values, error_x_values.Select(x => Task.Error(x)).ToList());
             chart1.Series[4].Points.DataBindXY(Task.Elements.Take(Task.Elements.Count - 1).ToList(), Task.Eta.Select(item => item / 100.0).ToList());
         }
 
         private static double[] error_x_values = Series(0.0, 1.0, 2000);
-        private static double[] x = Series(0.0, 1.0, 8);
+        private static double[] x = Series(0.0, 1.0, 56);
 
         private async void Chart1_Click(object sender, System.EventArgs e)
         {
-            await this.Task.StartAdaptationAlgorithm(3, (list) =>
+            await this.Task.StartAdaptationAlgorithm(75, (list) =>
             {
                 Plot();
                 this.table.Rows.Add(OutputData(list));

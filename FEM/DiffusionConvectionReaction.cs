@@ -10,9 +10,9 @@ namespace FEM
 {
     public partial class DiffusionConvectionReaction : FEMBase
     {
-        public double Mu;
-        public double Beta;
-        public double Sigma;
+        public Func<double, double> Mu;
+        public Func<double, double> Beta;
+        public Func<double, double> Sigma;
         public double Alpha;
         public IList<double> Eta;
         public Func<double, double> F;
@@ -26,20 +26,20 @@ namespace FEM
         private double[][] K;
         private List<double> e_coefficients;
         private double lastAddedElements;
-        private int N0;
-        private double E0;
+        private int N_prev;
+        private double E_prev;
 
         public DiffusionConvectionReaction(
             double[] elements,
             BoundaryCondition condition,
             Func<double, double> f,
-            double mu,
-            double beta,
-            double sigma,
+            Func<double, double> mu,
+            Func<double, double> beta,
+            Func<double, double> sigma,
             double alpha
           ) : base(elements)
         {
-            N0 = elements.Length - 1;
+            N_prev = elements.Length - 1;
             Condition = condition;
             F = f;
             Mu = mu;
@@ -87,9 +87,9 @@ namespace FEM
 
         public async Task StartAdaptationAlgorithm(double allowedErrorInPercents, Func<List<string>, Task> progress)
         {
-            int iter = 0; 
+            int iter = 0;
             while (true)
-            { 
+            {
                 iter++;
                 int k = 0;
                 int i1 = 0;
@@ -141,10 +141,6 @@ namespace FEM
             Eta = new List<double>(this.N - 1);
 
             double errorVNorm = ErrorVNorm();
-            if (N - 1 == N0)
-            {
-                E0 = Sqrt(errorVNorm);
-            }
             double uhNorm = Uh_VNorm_Sqr();
             double denom = Sqrt(uhNorm + errorVNorm);
             double maxerror = 0.0;
@@ -158,6 +154,22 @@ namespace FEM
                 }
                 Eta.Add(localError);
             }
+
+            string convergence;
+            if (N_prev == 0)
+            {
+                convergence = "-";
+                N_prev = N - 1;
+                E_prev = Sqrt(errorVNorm);
+            }
+            else
+            {
+                double e_norm = Sqrt(errorVNorm);
+                double convergence1 = (Log(E_prev) - Log(e_norm)) / (Log(N - 1) - Log(N_prev));
+                E_prev = e_norm;
+                N_prev = N - 1;
+                convergence = string.Format("{0:0.0000}", convergence1);
+            }
             return new List<string>()
             {
                 (N-1).ToString(),
@@ -165,8 +177,8 @@ namespace FEM
                 Sqrt(uhNorm).ToString(),
                 Sqrt(errorVNorm).ToString(),
                 string.Format("{0:0.0000}%", maxerror),
-                string.Format("{0:0.0000}", (Log(E0)-Log(Sqrt(errorVNorm)))/(Log(N-1)-Log(N0))),
-                (9*nIntegrals).ToString()
+                convergence,
+                (9* nIntegrals).ToString()
             };
         }
 
@@ -233,19 +245,28 @@ namespace FEM
             return (fp12(a, b) * (b - a) / 2.0) + (fp12(b, c) * (c - b) / 2.0);
         }
 
+        private double F_x12(Func<double, double> f, int i)
+        {
+            return f((Elements[i + 1] - Elements[i]) / 2.0);
+        }
+
+        private double Mu12(int i) => F_x12(Mu, i);
+        private double Beta12(int i) => F_x12(Mu, i);
+        private double Sigma12(int i) => F_x12(Mu, i);
+
         public double BillinearForm(int i, int j)
         {
-            return Mu * CourantFunction.integrate_dx_dx(i, j, Elements) +
-                       Beta * CourantFunction.integrate_dx_fx(i, j, Elements) +
-                       Sigma * CourantFunction.integate_fx_fx(i, j, Elements) +
+            return Mu12(i) * CourantFunction.integrate_dx_dx(i, j, Elements) +
+                       Beta(i) * CourantFunction.integrate_dx_fx(i, j, Elements) +
+                       Sigma(i) * CourantFunction.integate_fx_fx(i, j, Elements) +
                        Alpha * Fi(1, i) * Fi(1, j);
         }
 
         public double Calc_a_Bi_Bj(int i)
         {
-            return (Mu * B_BasisFunc.integrate_d_dx_2(i, Elements))
-                + (Beta * B_BasisFunc.integrate_d_dx_fx(i, Elements))
-                + (Sigma * B_BasisFunc.integrate_fx_pow2(i, Elements))
+            return (Mu(i) * B_BasisFunc.integrate_d_dx_2(i, Elements))
+                + (Beta(i) * B_BasisFunc.integrate_d_dx_fx(i, Elements))
+                + (Sigma(i) * B_BasisFunc.integrate_fx_pow2(i, Elements))
                 + (Alpha * Pow(B_BasisFunc.B_i(1, i, Elements), 2));
         }
 
@@ -266,14 +287,14 @@ namespace FEM
                 double ret = 0.0;
                 if (i == k - 1)
                 {
-                    ret = ((Beta * 2.0) / 3.0) + (Sigma * (Elements[i + 1] - Elements[i]) / 3.0);
+                    ret = ((Beta(i) * 2.0) / 3.0) + (Sigma(i) * (Elements[i + 1] - Elements[i]) / 3.0);
                 }
                 if (i == k)
                 {
-                    ret = ((-Beta * 2.0) / 3.0) + (Sigma * (Elements[i + 1] - Elements[i]) / 3.0);
+                    ret = ((-Beta(i) * 2.0) / 3.0) + (Sigma(i) * (Elements[i + 1] - Elements[i]) / 3.0);
                 }
                 return ret;
-            } 
+            }
 
             double a_uh_v = 0.0;
             if (j == 0)
